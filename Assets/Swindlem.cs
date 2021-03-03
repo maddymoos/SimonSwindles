@@ -208,25 +208,25 @@ public class Swindlem : MonoBehaviour {
 		for(int i=0;i<6;i++){
 			uwu+=xorcolor[Array.IndexOf(xorcolor.ToCharArray(), output[i])^Array.IndexOf(xorcolor.ToCharArray(), answer[i])];
 		}
-		switch((Array.IndexOf(color2.ToCharArray(), input[count%6])^1)%2){
+		switch((Array.IndexOf(xorcolor.ToCharArray(), input[count%6])^1)%2){
 		case 0: uwu = uwu.Substring(0,3).Reverse().Join("")+uwu.Substring(3,3).Join("");break;
 		case 1: uwu = uwu.Substring(0,3).Join("")+uwu.Substring(3,3).Reverse().Join("");break;
 		}
-		switch((Array.IndexOf(color2.ToCharArray(), input[count%6])^2)%4){
-		case 0: uwu = invert(uwu.Substring(0,3))+uwu.Substring(3,3); break;
-		case 1: uwu = invert(uwu.Substring(0,3))+uwu.Substring(3,3); break;
-		case 2: uwu = uwu.Substring(0,3)+invert(uwu.Substring(3,3)); break;
-		case 3: uwu = uwu.Substring(0,3)+invert(uwu.Substring(3,3)); break;
+		switch((Array.IndexOf(xorcolor.ToCharArray(), input[count%6])^2)%4){
+		case 0: uwu = invert(uwu.Substring(0,3))+uwu.Substring(3,3); break; //K B
+		case 1: uwu = invert(uwu.Substring(0,3))+uwu.Substring(3,3); break; //R M
+		case 2: uwu = uwu.Substring(0,3)+invert(uwu.Substring(3,3)); break; //G C
+		case 3: uwu = uwu.Substring(0,3)+invert(uwu.Substring(3,3)); break; //W Y
 		}
-		switch((Array.IndexOf(color2.ToCharArray(), input[count%6])^4)%8){
-		case 0:uwu = leftrotate(uwu, 1);break;
-		case 1:uwu = leftrotate(uwu, 1);break;
-		case 2:uwu = leftrotate(uwu, 1);break;
-		case 3:uwu = leftrotate(uwu, 1);break;
-		case 4:uwu = leftrotate(uwu, 5);break;
-		case 5:uwu = leftrotate(uwu, 5);break;
-		case 6:uwu = leftrotate(uwu, 5);break;
-		case 7:uwu = leftrotate(uwu, 5);break;
+		switch((Array.IndexOf(xorcolor.ToCharArray(), input[count%6])^4)%8){
+		case 4:uwu = leftrotate(uwu, 5);break; //K
+		case 5:uwu = leftrotate(uwu, 5);break; //R
+		case 6:uwu = leftrotate(uwu, 5);break; //G
+		case 7:uwu = leftrotate(uwu, 5);break; //Y
+		case 0:uwu = leftrotate(uwu, 1);break; //B
+		case 1:uwu = leftrotate(uwu, 1);break; //M
+		case 2:uwu = leftrotate(uwu, 1);break; //C
+		case 3:uwu = leftrotate(uwu, 1);break; //Y
 		}
 		answer = uwu;
 		Debug.LogFormat("[Simon Swindles #{0}]: GUESS #{1} - You guessed {2}. I respond with {3}, and make the next answer {4}", _moduleId, count,input,output,answer);
@@ -234,7 +234,7 @@ public class Swindlem : MonoBehaviour {
 		input = "";
 	}
 	 public static string leftrotate(string t, int x)
-{
+{		//AWKBRA -> WKBRAA
     return t.Substring(x, t.Length - x) + t.Substring(0, x); 
 } 
 private string ReverseTwoHalves(string str)
@@ -272,7 +272,11 @@ private string ReverseString(char[] s) {
 			
      }
 	 return s.Join("");
-}IEnumerator ProcessTwitchCommand(string command)
+}
+	 #pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"!{0} query KWYCRB (Queries blacK White Yellow Cyan Red Blue), !{0} submit RGBCMY (Submits Red Green Blue Cyan Magenta Yellow)";
+	#pragma warning restore 414
+IEnumerator ProcessTwitchCommand(string command)
     {
 		bool Valid = true;
 	     Match m;
@@ -293,6 +297,7 @@ private string ReverseString(char[] s) {
 				}
 			if(!Valid){
 				yield return "sendtochaterror Incorrect Syntax. Valid colors are K,R,G,B,C,M,Y, and W. Make sure your input is length 6!";
+				yield break;
 			}
             yield return null;  // acknowledge to TP that the command was valid
 
