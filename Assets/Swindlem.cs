@@ -38,6 +38,10 @@ public class Swindlem : MonoBehaviour
             inputting = false;
 
         }
+        float scalar = transform.lossyScale.x;
+        for (var i = 0; i < lights.Length; i++)
+            lights[i].range *= scalar;
+        blacklight.range *= scalar;
         output = "";
         input = "";
         count = 0;
@@ -322,7 +326,7 @@ public class Swindlem : MonoBehaviour
         return s.Join("");
     }
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"!{0} query KWYCRB (Queries blacK White Yellow Cyan Red Blue), !{0} submit RGBCMY (Submits Red Green Blue Cyan Magenta Yellow)";
+    private readonly string TwitchHelpMessage = @"!{0} query KWYCRB (Queries blacK White Yellow Cyan Red Blue), !{0} submit RGBCMY (Submits Red Green Blue Cyan Magenta Yellow), !{0} mute (shuts up)";
 #pragma warning restore 414
     IEnumerator ProcessTwitchCommand(string command)
     {
@@ -375,7 +379,7 @@ public class Swindlem : MonoBehaviour
             }
         }
 
-        var n = Regex.Match(command, @"^\s*(?:mute)?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        var n = Regex.Match(command, @"^\s*(?:mute|shut\sup)?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         if (n.Success)
         {
             yield return null;
