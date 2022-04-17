@@ -409,6 +409,7 @@ GameObject:
   - component: {fileID: 114358939590949828}
   - component: {fileID: 114703088612980846}
   - component: {fileID: 114093265759293710}
+  - component: {fileID: 114698560357212080}
   m_Layer: 0
   m_Name: Swindles
   m_TagString: Untagged
@@ -2094,6 +2095,18 @@ MonoBehaviour:
   AllowSelectionWrapY: 0
   ForceSelectionHighlight: 0
   ForceInteractionHighlight: 0
+--- !u!114 &114698560357212080
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1860329324060172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adf69c2de51bd3c43bbd9bc22578ee08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _seed: 1
 --- !u!114 &114699660166688034
 MonoBehaviour:
   m_ObjectHideFlags: 1

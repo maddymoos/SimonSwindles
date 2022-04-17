@@ -1,12 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
-using System;
-using KModkit;
 using System.Text.RegularExpressions;
+using UnityEngine;
 using Rnd = UnityEngine.Random;
-using System.Text;
 
 public class Swindlem : MonoBehaviour
 {
@@ -48,8 +46,184 @@ public class Swindlem : MonoBehaviour
         for(var i = 0; i < lights.Length; i++)
             lights[i].range *= scalar;
         blacklight.range *= scalar;
+        GenerateRuleSeed();
         Generate();
     }
+
+    private static string ColorToBinary(string s)
+    {
+        string str = "";
+        foreach(char c in s)
+        {
+            switch(c)
+            {
+                case 'K':
+                    str += "000";
+                    break;
+                case 'R':
+                    str += "100";
+                    break;
+                case 'G':
+                    str += "010";
+                    break;
+                case 'B':
+                    str += "001";
+                    break;
+                case 'C':
+                    str += "011";
+                    break;
+                case 'M':
+                    str += "101";
+                    break;
+                case 'Y':
+                    str += "110";
+                    break;
+                case 'W':
+                    str += "111";
+                    break;
+            }
+        }
+        return str;
+    }
+    private static string BinaryToColor(string s)
+    {
+        string str = "";
+        while(s.Length >= 3)
+        {
+            string cur = s.Substring(0, 3);
+            s = s.Substring(3);
+            switch(cur)
+            {
+                case "000":
+                    str += 'K';
+                    break;
+                case "100":
+                    str += 'R';
+                    break;
+                case "010":
+                    str += 'G';
+                    break;
+                case "001":
+                    str += 'B';
+                    break;
+                case "011":
+                    str += 'C';
+                    break;
+                case "101":
+                    str += 'M';
+                    break;
+                case "110":
+                    str += 'Y';
+                    break;
+                case "111":
+                    str += 'W';
+                    break;
+            }
+        }
+        return str;
+    }
+
+    // RULE SEED
+    private bool _nor1 = false, _nor2 = false, _revform = false, _bit1 = false, _bit2 = false, _bit3 = false;
+    private int _rule1 = 0, _rule2 = 0, _rule3 = 0;
+
+    private List<Func<string, string>> _rules = new List<Func<string, string>>
+    {
+        // Vanilla
+        s => ReverseString(s.ToCharArray()),
+        s =>
+        {
+            s = s.Replace("K", "-");
+            s = s.Replace("R", "K");
+            s = s.Replace("-", "R");
+            s = s.Replace("G", "-");
+            s = s.Replace("Y", "G");
+            s = s.Replace("-", "Y");
+            s = s.Replace("B", "-");
+            s = s.Replace("M", "B");
+            s = s.Replace("-", "M");
+            s = s.Replace("C", "-");
+            s = s.Replace("W", "C");
+            s = s.Replace("-", "W");
+            return s;
+        },
+        s =>
+        {
+            s = s.Replace("K", "-");
+            s = s.Replace("G", "K");
+            s = s.Replace("-", "G");
+            s = s.Replace("R", "-");
+            s = s.Replace("Y", "R");
+            s = s.Replace("-", "Y");
+            s = s.Replace("B", "-");
+            s = s.Replace("C", "B");
+            s = s.Replace("-", "C");
+            s = s.Replace("M", "-");
+            s = s.Replace("W", "M");
+            s = s.Replace("-", "W");
+            return s;
+        },
+        s =>
+        {
+            s = s.Replace("K", "-");
+            s = s.Replace("B", "K");
+            s = s.Replace("-", "B");
+            s = s.Replace("G", "-");
+            s = s.Replace("C", "G");
+            s = s.Replace("-", "C");
+            s = s.Replace("R", "-");
+            s = s.Replace("M", "R");
+            s = s.Replace("-", "M");
+            s = s.Replace("Y", "-");
+            s = s.Replace("W", "Y");
+            s = s.Replace("-", "W");
+            return s;
+        },
+        s => LeftRotate(s, 1),
+        s => LeftRotate(s, 5),
+        s => ReverseString(s.ToCharArray()),
+        s => ReverseTwoHalves(s),
+        // Rule-Seeded
+        s => new char[] { s[1], s[0], s[3], s[2], s[5], s[4] }.Join(""),
+        s => s.Select(sub => BinaryToColor(LeftRotate(ColorToBinary(sub.ToString()), 1))).Join(""),
+        s => s.Select(sub => BinaryToColor(LeftRotate(ColorToBinary(sub.ToString()), 2))).Join(""),
+        s => BinaryToColor(LeftRotate(ColorToBinary(s), 1)),
+        s => BinaryToColor(LeftRotate(ColorToBinary(s), 17))
+    };
+    private List<List<Func<string, string>>> _rulesFunni = new List<List<Func<string, string>>>
+    {
+        new List<Func<string, string>> { s => new char[] { s[2], s[1], s[0], s[3], s[4], s[5] }.Join(""), s => new char[] { s[0], s[1], s[2], s[5], s[4], s[3] }.Join("") },
+        new List<Func<string, string>> { s => Invert(s.Substring(0, 3)) + s.Substring(3, 3), s => s.Substring(0, 3) + Invert(s.Substring(3, 3)) },
+        new List<Func<string, string>> { s => LeftRotate(s, 1), s => LeftRotate(s, 5), s => LeftRotate(s, 2), s => LeftRotate(s, 4) },
+        new List<Func<string, string>> { s => InvertEven(s), s => Invert(InvertEven(s)) }
+    };
+    private List<int> _commandColors = new List<int> { 0, 1, 2 };
+
+    private void GenerateRuleSeed()
+    {
+        MonoRandom rnd = GetComponent<KMRuleSeedable>().GetRNG();
+
+        if(rnd.Seed == 1)
+            return;
+
+        Debug.LogFormat("[Simon Swindles #{0}] GENERATION PHASE: Ruleseed is {1}", _moduleId, rnd.Seed);
+
+        rnd.ShuffleFisherYates(_rules);
+        rnd.ShuffleFisherYates(_rulesFunni);
+        rnd.ShuffleFisherYates(_commandColors);
+
+        _nor1 = rnd.Next(2) == 1;
+        _nor2 = rnd.Next(2) == 1;
+        _revform = rnd.Next(2) == 1;
+        _bit1 = rnd.Next(2) == 1;
+        _bit2 = rnd.Next(2) == 1;
+        _bit3 = rnd.Next(2) == 1;
+
+        _rule1 = rnd.Next(_rulesFunni[0].Count);
+        _rule2 = rnd.Next(_rulesFunni[1].Count);
+        _rule3 = rnd.Next(_rulesFunni[2].Count);
+    }
+
     static private int _moduleIdCounter = 1;
     private int _moduleId;
     private void Generate()
@@ -99,9 +273,9 @@ public class Swindlem : MonoBehaviour
             }
             switch(aly)
             {
-                case 0: if(x % 2 == 0) x = (x + 1) % 8; else x = (x - 1) % 8; break;
-                case 1: if(x % 4 == 0 || x % 4 == 1) x = (x + 2) % 8; else x = (x - 2) % 8; break;
-                case 2: if(x % 8 == 0 || x % 8 == 1 || x % 8 == 2 || x % 8 == 3) x = (x + 4) % 8; else x = (x - 4) % 8; break;
+                case 0: x ^= 1; break;
+                case 1: x ^= 2; break;
+                case 2: x ^= 4; break;
                 case 3:
                     input += xorcolor[x];
                     if(!_isMuted)
@@ -112,12 +286,16 @@ public class Swindlem : MonoBehaviour
         }
         else
         {
-            switch(aly)
+            if(aly == _commandColors[0])
+                input = "";
+            else if(aly == _commandColors[1])
+                Submit();
+            else if(aly == _commandColors[2])
+                Query();
+            else
             {
-                case 0: input = ""; break;
-                case 1: Submit(); break;
-                case 2: Query(); break;
-                case 3: Module.HandleStrike(); Generate(); break;
+                Module.HandleStrike();
+                Generate();
             }
             x = 0;
             inputting = false;
@@ -162,15 +340,17 @@ public class Swindlem : MonoBehaviour
         if(input == answer)
         {
             solved = true;
-            Module.HandlePass();
             count = 1;
             output = "RRRRRGGGGGBBBBBRRRRGGGGBBBBRRRGGGBBBRRGGBBRGBRGBRGBRGBRGBRRGGBBRRRGGGBBBRRRRGGGGBBBB";
             Debug.LogFormat("[Simon Swindles #{0}] Well done! You got me!", _moduleId);
+            Module.HandlePass();
         }
         else
         {
-            Module.HandleStrike(); Generate();
             Debug.LogFormat("[Simon Swindles #{0}] F.", _moduleId);
+            Debug.LogFormat("[Simon Swindles #{0}] (You submitted {1}.)", _moduleId, input);
+            Module.HandleStrike();
+            Generate();
         }
     }
     void Query()
@@ -180,68 +360,36 @@ public class Swindlem : MonoBehaviour
         {
             switch(input[i])
             {
-                case 'K': death = ReverseString(death.ToCharArray()); break;
+                case 'K':
+                    death = _rules[0](death);
+                    break;
                 case 'R':
-                    death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("R", "K")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "R")).Join("");
-                    death = death.Select(x => x.ToString().Replace("G", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("Y", "G")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "Y")).Join("");
-                    death = death.Select(x => x.ToString().Replace("B", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("M", "B")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "M")).Join("");
-                    death = death.Select(x => x.ToString().Replace("C", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("W", "C")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "W")).Join(""); break;
+                    death = _rules[1](death);
+                    break;
                 case 'G':
-                    death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("G", "K")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "G")).Join("");
-                    death = death.Select(x => x.ToString().Replace("R", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("Y", "R")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "Y")).Join("");
-                    death = death.Select(x => x.ToString().Replace("B", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("C", "B")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "C")).Join("");
-                    death = death.Select(x => x.ToString().Replace("M", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("W", "M")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "W")).Join(""); break;
+                    death = _rules[2](death);
+                    break;
                 case 'B':
-                    death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("B", "K")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "B")).Join("");
-                    death = death.Select(x => x.ToString().Replace("G", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("C", "G")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "C")).Join("");
-                    death = death.Select(x => x.ToString().Replace("R", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("M", "R")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "M")).Join("");
-                    death = death.Select(x => x.ToString().Replace("Y", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("W", "Y")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "W")).Join(""); break;
-                case 'C': death = Leftrotate(death, 1); break;
-                case 'M': death = Leftrotate(death, 5); break;
+                    death = _rules[3](death);
+                    break;
+                case 'C':
+                    death = _rules[4](death);
+                    break;
+                case 'M':
+                    death = _rules[5](death);
+                    break;
                 case 'Y':
-                    death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("W", "K")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "W")).Join("");
-                    death = death.Select(x => x.ToString().Replace("G", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("M", "G")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "M")).Join("");
-                    death = death.Select(x => x.ToString().Replace("R", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("C", "R")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "C")).Join("");
-                    death = death.Select(x => x.ToString().Replace("Y", "-")).Join("");
-                    death = death.Select(x => x.ToString().Replace("B", "Y")).Join("");
-                    death = death.Select(x => x.ToString().Replace("-", "B")).Join(""); break;
-                case 'W': death = ReverseTwoHalves(death); break;
+                    death = _rules[6](death);
+                    break;
+                case 'W':
+                    death = _rules[7](death);
+                    break;
             }
         }
         string death2 = "";
         for(int i = 0; i < 6; i++)
         {
-            death2 += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), death[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), input[i])];
+            death2 += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), death[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), input[i]) ^ (_nor1 ? 7 : 0)];
             if(input[i] == answer[i])
             {
                 char h = xorcolor[Array.IndexOf(xorcolor.ToCharArray(), death2[i]) ^ 7];
@@ -252,66 +400,89 @@ public class Swindlem : MonoBehaviour
         string uwu = "";
         for(int i = 0; i < 6; i++)
         {
-            uwu += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), output[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), answer[i])];
+            uwu += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), output[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), answer[i]) ^ (_nor2 ? 7 : 0)];
         }
-        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 1) % 2)
+
+        int calced = _revform ? 5 - (count % 6) : count % 6;
+
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[calced]) & 1) ^ (_bit1 ? 1 : 0))
         {
-            case 0: uwu = uwu.Substring(0, 3).Reverse().Join("") + uwu.Substring(3, 3).Join(""); break;
-            case 1: uwu = uwu.Substring(0, 3).Join("") + uwu.Substring(3, 3).Reverse().Join(""); break;
+            case 0: uwu = _rulesFunni[0][_rule1 ^ 1](uwu); break;
+            case 1: uwu = _rulesFunni[0][_rule1](uwu); break;
         }
-        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 2) % 4)
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[calced]) & 2) ^ (_bit1 ? 2 : 0))
         {
-            case 0: uwu = Invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //K B
-            case 1: uwu = Invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //R M
-            case 2: uwu = uwu.Substring(0, 3) + Invert(uwu.Substring(3, 3)); break; //G C
-            case 3: uwu = uwu.Substring(0, 3) + Invert(uwu.Substring(3, 3)); break; //W Y
+            case 0: uwu = _rulesFunni[1][_rule2 ^ 1](uwu); break;
+            case 2: uwu = _rulesFunni[1][_rule2](uwu); break;
         }
-        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 4) % 8)
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[calced]) & 4) ^ (_bit1 ? 4 : 0))
         {
-            case 4: uwu = Leftrotate(uwu, 5); break; //K
-            case 5: uwu = Leftrotate(uwu, 5); break; //R
-            case 6: uwu = Leftrotate(uwu, 5); break; //G
-            case 7: uwu = Leftrotate(uwu, 5); break; //Y
-            case 0: uwu = Leftrotate(uwu, 1); break; //B
-            case 1: uwu = Leftrotate(uwu, 1); break; //M
-            case 2: uwu = Leftrotate(uwu, 1); break; //C
-            case 3: uwu = Leftrotate(uwu, 1); break; //Y
+            case 0: uwu = _rulesFunni[2][_rule3 ^ 1](uwu); break;
+            case 4: uwu = _rulesFunni[2][_rule3](uwu); break;
         }
         answer = uwu;
         Debug.LogFormat("[Simon Swindles #{0}] GUESS #{1} - You guessed {2}. I respond with {3}, and make the next answer {4}", _moduleId, count, input, output, answer);
         count++;
         input = "";
     }
-    public static string Leftrotate(string t, int x)
+    public static string LeftRotate(string t, int x)
     {       //AWKBRA -> WKBRAA
         return t.Substring(x, t.Length - x) + t.Substring(0, x);
     }
-    private string ReverseTwoHalves(string str)
+    private static string ReverseTwoHalves(string str)
     {
         return str.Substring(0, str.Length / 2).Reverse().Join("") + str.Substring(str.Length / 2, (str.Length / 2)).Reverse().Join("");
     }
-    private string ReplaceLastChar(string str, char c)
+    private static string ReplaceLastChar(string str, char c)
     {
         return str.Substring(0, str.Length - 1) + c;
     }
-    private string Invert(string str)
+    private static string Invert(string str)
     {
         string death = str;
-        death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
-        death = death.Select(x => x.ToString().Replace("W", "K")).Join("");
-        death = death.Select(x => x.ToString().Replace("-", "W")).Join("");
-        death = death.Select(x => x.ToString().Replace("G", "-")).Join("");
-        death = death.Select(x => x.ToString().Replace("M", "G")).Join("");
-        death = death.Select(x => x.ToString().Replace("-", "M")).Join("");
-        death = death.Select(x => x.ToString().Replace("R", "-")).Join("");
-        death = death.Select(x => x.ToString().Replace("C", "R")).Join("");
-        death = death.Select(x => x.ToString().Replace("-", "C")).Join("");
-        death = death.Select(x => x.ToString().Replace("Y", "-")).Join("");
-        death = death.Select(x => x.ToString().Replace("B", "Y")).Join("");
-        death = death.Select(x => x.ToString().Replace("-", "B")).Join("");
+        death = death.Replace("K", "-");
+        death = death.Replace("W", "K");
+        death = death.Replace("-", "W");
+        death = death.Replace("G", "-");
+        death = death.Replace("M", "G");
+        death = death.Replace("-", "M");
+        death = death.Replace("R", "-");
+        death = death.Replace("C", "R");
+        death = death.Replace("-", "C");
+        death = death.Replace("Y", "-");
+        death = death.Replace("B", "Y");
+        death = death.Replace("-", "B");
         return death;
     }
-    private string ReverseString(char[] s)
+    private static string InvertEven(string s)
+    {
+        char[] str = s.ToCharArray();
+
+        for(int i = 0; i < str.Length; i++)
+        {
+            if(i % 2 == 1)
+                continue;
+            if(str[i] == 'K')
+                str[i] = 'W';
+            else if(str[i] == 'R')
+                str[i] = 'C';
+            else if(str[i] == 'G')
+                str[i] = 'M';
+            else if(str[i] == 'B')
+                str[i] = 'Y';
+            else if(str[i] == 'C')
+                str[i] = 'R';
+            else if(str[i] == 'M')
+                str[i] = 'G';
+            else if(str[i] == 'Y')
+                str[i] = 'B';
+            else if(str[i] == 'W')
+                str[i] = 'K';
+        }
+
+        return str.Join("");
+    }
+    private static string ReverseString(char[] s)
     {
         for(int i = 0; i < s.Length / 2; i++)
         {
@@ -366,9 +537,9 @@ public class Swindlem : MonoBehaviour
             }
             if(type.ToLowerInvariant() == "query")
             {
-                buttons[2].OnInteract();
+                buttons[_commandColors[2]].OnInteract();
             }
-            else buttons[1].OnInteract();
+            else buttons[_commandColors[1]].OnInteract();
             if(solved)
             {
                 yield return "solve";
@@ -397,7 +568,7 @@ public class Swindlem : MonoBehaviour
                     buttons[3].OnInteract();
                     yield return new WaitForSeconds(0.1f);
                 }
-                buttons[2].OnInteract();
+                buttons[_commandColors[2]].OnInteract();
                 goto inputSolution;
             }
         }
@@ -413,7 +584,7 @@ public class Swindlem : MonoBehaviour
             buttons[3].OnInteract();
             yield return new WaitForSeconds(0.2f);
         }
-        buttons[1].OnInteract();
+        buttons[_commandColors[1]].OnInteract();
     }
 
     private List<KMSelectable> GetAutosolveBtns(char inp, int num)
