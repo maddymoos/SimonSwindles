@@ -29,28 +29,6 @@ public class Swindlem : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        constnt = "";
-        answer = "";
-        for (int i = 0; i < 6; i++)
-        {
-            answer += color2[Rnd.Range(0, 8)];
-            constnt += color2[Rnd.Range(0, 8)];
-            inputting = false;
-
-        }
-        float scalar = transform.lossyScale.x;
-        for (var i = 0; i < lights.Length; i++)
-            lights[i].range *= scalar;
-        blacklight.range *= scalar;
-        output = "";
-        input = "";
-        count = 0;
-        Debug.LogFormat("[Simon Swindles #{0}]: GENERATION PHASE: Intial answer is {1} and the constant is {2}", _moduleId, answer, constnt);
-    }
-    static private int _moduleIdCounter = 1;
-    private int _moduleId;
-    void Awake()
-    {
         _moduleId = _moduleIdCounter++;
         for (byte i = 0; i < buttons.Length; i++)
         {
@@ -66,6 +44,28 @@ public class Swindlem : MonoBehaviour
             _isMuted = !_isMuted;
             return false;
         };
+        float scalar = transform.lossyScale.x;
+        for (var i = 0; i < lights.Length; i++)
+            lights[i].range *= scalar;
+        blacklight.range *= scalar;
+        Generate();
+    }
+    static private int _moduleIdCounter = 1;
+    private int _moduleId;
+    private void Generate()
+    {
+        constnt = "";
+        answer = "";
+        for (int i = 0; i < 6; i++)
+        {
+            answer += color2[Rnd.Range(0, 8)];
+            constnt += color2[Rnd.Range(0, 8)];
+            inputting = false;
+        }
+        output = "";
+        input = "";
+        count = 0;
+        Debug.LogFormat("[Simon Swindles #{0}]: GENERATION PHASE: Intial answer is {1} and the constant is {2}", _moduleId, answer, constnt);
     }
     void HandlePress(KMSelectable btn)
     {
@@ -116,8 +116,7 @@ public class Swindlem : MonoBehaviour
                     case 0: input = ""; break;
                     case 1: Subit(); break;
                     case 2: Querey(); break;
-                    case 3: Module.HandleStrike(); Start(); break;
-
+                    case 3: Module.HandleStrike(); Generate(); break;
                 }
                 x = 0;
                 inputting = false;
@@ -170,7 +169,7 @@ public class Swindlem : MonoBehaviour
         }
         else
         {
-            Module.HandleStrike(); Start();
+            Module.HandleStrike(); Generate();
             Debug.LogFormat("[Simon Swindles #{0}]: F.", _moduleId);
         }
     }
@@ -386,24 +385,115 @@ public class Swindlem : MonoBehaviour
             MuteSel.OnInteract();
             yield break;
         }
-
         yield break;
     }
+
+    // Implemented by Quinn Wuest.
     IEnumerator TwitchHandleForcedSolve()
     {
-        tpsolved = true;
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < input.Length; i++)
         {
-            int X = Array.IndexOf(xorcolor.ToCharArray(), answer[i]);
-            if (X % 2 == 1) buttons[0].OnInteract();
-            yield return new WaitForSeconds(.0125f);
-            if (X % 4 == 2 || X % 4 == 3) buttons[1].OnInteract();
-            yield return new WaitForSeconds(.025f);
-            if (X % 8 == 4 || X % 8 == 5 || X % 8 == 6 || X % 8 == 7) buttons[2].OnInteract();
-            yield return new WaitForSeconds(.05f);
+            if (input[i] != answer[i])
+            {
+                for (int j = input.Length; j < 6; j++)
+                {
+                    buttons[3].OnInteract();
+                    yield return new WaitForSeconds(0.1f);
+                }
+                buttons[2].OnInteract();
+                goto inputSolution;
+            }
+        }
+        inputSolution:
+        for (int i = input.Length; i < 6; i++)
+        {
+            var list = GetAutosolveBtns(answer[i], x);
+            for (int j = 0; j < list.Count; j++)
+            {
+                list[j].OnInteract();
+                yield return new WaitForSeconds(0.05f);
+            }
             buttons[3].OnInteract();
+            yield return new WaitForSeconds(0.2f);
         }
         buttons[1].OnInteract();
     }
 
+    private List<KMSelectable> GetAutosolveBtns(char inp, int num)
+    {
+        var list = new List<KMSelectable>();
+        if (inp == 'K')
+        {
+            if (num % 2 != 0)
+                list.Add(buttons[0]);
+            if (num % 4 != 0)
+                list.Add(buttons[1]);
+            if (num % 8 != 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'R')
+        {
+            if (num % 2 == 0)
+                list.Add(buttons[0]);
+            if (num % 4 != 0)
+                list.Add(buttons[1]);
+            if (num % 8 != 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'G')
+        {
+            if (num % 2 != 0)
+                list.Add(buttons[0]);
+            if (num % 4 == 0)
+                list.Add(buttons[1]);
+            if (num % 8 != 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'Y')
+        {
+            if (num % 2 == 0)
+                list.Add(buttons[0]);
+            if (num % 4 == 0)
+                list.Add(buttons[1]);
+            if (num % 8 != 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'B')
+        {
+            if (num % 2 != 0)
+                list.Add(buttons[0]);
+            if (num % 4 != 0)
+                list.Add(buttons[1]);
+            if (num % 8 == 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'M')
+        {
+            if (num % 2 == 0)
+                list.Add(buttons[0]);
+            if (num % 4 != 0)
+                list.Add(buttons[1]);
+            if (num % 8 == 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'C')
+        {
+            if (num % 2 != 0)
+                list.Add(buttons[0]);
+            if (num % 4 == 0)
+                list.Add(buttons[1]);
+            if (num % 8 == 0)
+                list.Add(buttons[2]);
+        }
+        else if (inp == 'W')
+        {
+            if (num % 2 == 0)
+                list.Add(buttons[0]);
+            if (num % 4 == 0)
+                list.Add(buttons[1]);
+            if (num % 8 == 0)
+                list.Add(buttons[2]);
+        }
+        return list;
+    }
 }
