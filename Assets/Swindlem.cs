@@ -22,7 +22,7 @@ public class Swindlem : MonoBehaviour
     private string[] xorn = { "Black", "Red", "Green", "Yellow", "Blue", "Magenta", "Cyan", "White" };
     private string color2 = "KRGBCMYW";
     private string xorcolor = "KRGYBMCW";
-    private string answer, constnt, input, output;
+    private string answer, constant, input, output;
     private bool inputting, solved, tpsolved;
     private int x, count;
     private bool _isMuted;
@@ -30,7 +30,7 @@ public class Swindlem : MonoBehaviour
     void Start()
     {
         _moduleId = _moduleIdCounter++;
-        for (byte i = 0; i < buttons.Length; i++)
+        for(byte i = 0; i < buttons.Length; i++)
         {
             KMSelectable btn = buttons[i];
             btn.OnInteract += delegate
@@ -45,7 +45,7 @@ public class Swindlem : MonoBehaviour
             return false;
         };
         float scalar = transform.lossyScale.x;
-        for (var i = 0; i < lights.Length; i++)
+        for(var i = 0; i < lights.Length; i++)
             lights[i].range *= scalar;
         blacklight.range *= scalar;
         Generate();
@@ -54,131 +54,131 @@ public class Swindlem : MonoBehaviour
     private int _moduleId;
     private void Generate()
     {
-        constnt = "";
+        constant = "";
         answer = "";
-        for (int i = 0; i < 6; i++)
+        for(int i = 0; i < 6; i++)
         {
             answer += color2[Rnd.Range(0, 8)];
-            constnt += color2[Rnd.Range(0, 8)];
+            constant += color2[Rnd.Range(0, 8)];
             inputting = false;
         }
         output = "";
         input = "";
         count = 0;
-        Debug.LogFormat("[Simon Swindles #{0}]: GENERATION PHASE: Intial answer is {1} and the constant is {2}", _moduleId, answer, constnt);
+        Debug.LogFormat("[Simon Swindles #{0}] GENERATION PHASE: Intial answer is {1} and the constant is {2}", _moduleId, answer, constant);
     }
     void HandlePress(KMSelectable btn)
     {
-        if (!solved)
+        if(solved)
+            return;
+
+        int aly = Array.IndexOf(buttons, btn);
+        buttons[aly].AddInteractionPunch();
+        if(input.Length != 6)
         {
-            int aly = Array.IndexOf(buttons, btn);
-            buttons[aly].AddInteractionPunch();
-            if (input.Length != 6)
+            if(!inputting)
             {
-                if (!inputting)
-                {
-                    StopAllCoroutines();
-                    blacklight.enabled = false;
-                    lights[0].enabled = false;
-                    lights[1].enabled = false;
-                    lights[2].enabled = false;
-                    StartCoroutine(stupid());
-                    inputting = true;
-                }
-                if (aly != 3)
-                {
-                    lights[aly].enabled = !lights[aly].enabled;
-                }
-                else
-                {
-                    blacklight.enabled = false;
-                    lights[0].enabled = false;
-                    lights[1].enabled = false;
-                    lights[2].enabled = false;
-                }
-                switch (aly)
-                {
-                    case 0: if (x % 2 == 0) x = (x + 1) % 8; else x = (x - 1) % 8; break;
-                    case 1: if (x % 4 == 0 || x % 4 == 1) x = (x + 2) % 8; else x = (x - 2) % 8; break;
-                    case 2: if (x % 8 == 0 || x % 8 == 1 || x % 8 == 2 || x % 8 == 3) x = (x + 4) % 8; else x = (x - 4) % 8; break;
-                    case 3:
-                        input += xorcolor[x];
-                        if (!_isMuted)
-                            Audio.PlaySoundAtTransform(xorn[x], UWU.transform);
-                        x = 0;
-                        break;
-                }
+                StopAllCoroutines();
+                blacklight.enabled = false;
+                lights[0].enabled = false;
+                lights[1].enabled = false;
+                lights[2].enabled = false;
+                StartCoroutine(Stupid());
+                inputting = true;
+            }
+            if(aly != 3)
+            {
+                lights[aly].enabled = !lights[aly].enabled;
             }
             else
             {
-                switch (aly)
-                {
-                    case 0: input = ""; break;
-                    case 1: Subit(); break;
-                    case 2: Querey(); break;
-                    case 3: Module.HandleStrike(); Generate(); break;
-                }
-                x = 0;
-                inputting = false;
+                blacklight.enabled = false;
+                lights[0].enabled = false;
+                lights[1].enabled = false;
+                lights[2].enabled = false;
             }
+            switch(aly)
+            {
+                case 0: if(x % 2 == 0) x = (x + 1) % 8; else x = (x - 1) % 8; break;
+                case 1: if(x % 4 == 0 || x % 4 == 1) x = (x + 2) % 8; else x = (x - 2) % 8; break;
+                case 2: if(x % 8 == 0 || x % 8 == 1 || x % 8 == 2 || x % 8 == 3) x = (x + 4) % 8; else x = (x - 4) % 8; break;
+                case 3:
+                    input += xorcolor[x];
+                    if(!_isMuted)
+                        Audio.PlaySoundAtTransform(xorn[x], UWU.transform);
+                    x = 0;
+                    break;
+            }
+        }
+        else
+        {
+            switch(aly)
+            {
+                case 0: input = ""; break;
+                case 1: Submit(); break;
+                case 2: Query(); break;
+                case 3: Module.HandleStrike(); Generate(); break;
+            }
+            x = 0;
+            inputting = false;
         }
     }
     // Update is called once per frame
-    IEnumerator stupid()
+    IEnumerator Stupid()
     {
-        while (true)
+        while(true)
         {
-            if (count != 0 && !inputting)
+            if(count != 0 && !inputting)
             {
-                if (!solved) yield return new WaitForSeconds(2f);
-                for (int i = 0; i < output.Length; i++)
+                if(!solved) yield return new WaitForSeconds(2f);
+                for(int i = 0; i < output.Length; i++)
                 {
-                    if (inputting) break;
+                    if(inputting) break;
                     int X = Array.IndexOf(xorcolor.ToCharArray(), output[i]);
                     blacklight.enabled = true;
-                    if (X % 2 != 0) lights[0].enabled = true;
-                    if (X % 4 != 0 && X % 4 != 1) lights[1].enabled = true;
-                    if (X % 8 != 0 && X % 8 != 1 && X % 8 != 2 && X % 8 != 3) lights[2].enabled = true;
-                    if (!solved && !_isMuted) Audio.PlaySoundAtTransform(xorn[X], UWU);
-                    if (count == 1 && solved && !tpsolved && !_isMuted) Audio.PlaySoundAtTransform(xorn[X], UWU);
-                    if (inputting) break;
-                    if (!solved) yield return new WaitForSeconds(.5f);
-                    if (solved) yield return new WaitForSeconds(.05f);
-                    if (inputting) break;
+                    if(X % 2 != 0) lights[0].enabled = true;
+                    if(X % 4 != 0 && X % 4 != 1) lights[1].enabled = true;
+                    if(X % 8 != 0 && X % 8 != 1 && X % 8 != 2 && X % 8 != 3) lights[2].enabled = true;
+                    if(!solved && !_isMuted) Audio.PlaySoundAtTransform(xorn[X], UWU);
+                    if(count == 1 && solved && !tpsolved && !_isMuted) Audio.PlaySoundAtTransform(xorn[X], UWU);
+                    if(inputting) break;
+                    if(!solved) yield return new WaitForSeconds(.5f);
+                    if(solved) yield return new WaitForSeconds(.05f);
+                    if(inputting) break;
                     blacklight.enabled = false;
                     lights[0].enabled = false;
                     lights[1].enabled = false;
                     lights[2].enabled = false;
-                    if (inputting) break;
-                    if (!solved) yield return new WaitForSeconds(.2f);
+                    if(inputting) break;
+                    if(!solved) yield return new WaitForSeconds(.2f);
                 }
             }
-            if (solved) count++;
+            if(solved) count++;
             yield return new WaitForSeconds(.001f);
         }
     }
-    void Subit()
+    void Submit()
     {
-        if (input == answer)
+        if(input == answer)
         {
             solved = true;
             Module.HandlePass();
             count = 1;
             output = "RRRRRGGGGGBBBBBRRRRGGGGBBBBRRRGGGBBBRRGGBBRGBRGBRGBRGBRGBRRGGBBRRRGGGBBBRRRRGGGGBBBB";
-            Debug.LogFormat("[Simon Swindles #{0}]: Well done! You got me!", _moduleId);
+            Debug.LogFormat("[Simon Swindles #{0}] Well done! You got me!", _moduleId);
         }
         else
         {
             Module.HandleStrike(); Generate();
-            Debug.LogFormat("[Simon Swindles #{0}]: F.", _moduleId);
+            Debug.LogFormat("[Simon Swindles #{0}] F.", _moduleId);
         }
     }
-    void Querey()
+    void Query()
     {
-        string death = constnt;
-        for (int i = 0; i < 6; i++)
+        string death = constant;
+        for(int i = 0; i < 6; i++)
         {
-            switch (input[i])
+            switch(input[i])
             {
                 case 'K': death = ReverseString(death.ToCharArray()); break;
                 case 'R':
@@ -220,8 +220,8 @@ public class Swindlem : MonoBehaviour
                     death = death.Select(x => x.ToString().Replace("Y", "-")).Join("");
                     death = death.Select(x => x.ToString().Replace("W", "Y")).Join("");
                     death = death.Select(x => x.ToString().Replace("-", "W")).Join(""); break;
-                case 'C': death = leftrotate(death, 1); break;
-                case 'M': death = leftrotate(death, 5); break;
+                case 'C': death = Leftrotate(death, 1); break;
+                case 'M': death = Leftrotate(death, 5); break;
                 case 'Y':
                     death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
                     death = death.Select(x => x.ToString().Replace("W", "K")).Join("");
@@ -239,10 +239,10 @@ public class Swindlem : MonoBehaviour
             }
         }
         string death2 = "";
-        for (int i = 0; i < 6; i++)
+        for(int i = 0; i < 6; i++)
         {
             death2 += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), death[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), input[i])];
-            if (input[i] == answer[i])
+            if(input[i] == answer[i])
             {
                 char h = xorcolor[Array.IndexOf(xorcolor.ToCharArray(), death2[i]) ^ 7];
                 death2 = ReplaceLastChar(death2, h);
@@ -250,39 +250,39 @@ public class Swindlem : MonoBehaviour
         }
         output = death2;
         string uwu = "";
-        for (int i = 0; i < 6; i++)
+        for(int i = 0; i < 6; i++)
         {
             uwu += xorcolor[Array.IndexOf(xorcolor.ToCharArray(), output[i]) ^ Array.IndexOf(xorcolor.ToCharArray(), answer[i])];
         }
-        switch ((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 1) % 2)
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 1) % 2)
         {
             case 0: uwu = uwu.Substring(0, 3).Reverse().Join("") + uwu.Substring(3, 3).Join(""); break;
             case 1: uwu = uwu.Substring(0, 3).Join("") + uwu.Substring(3, 3).Reverse().Join(""); break;
         }
-        switch ((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 2) % 4)
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 2) % 4)
         {
-            case 0: uwu = invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //K B
-            case 1: uwu = invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //R M
-            case 2: uwu = uwu.Substring(0, 3) + invert(uwu.Substring(3, 3)); break; //G C
-            case 3: uwu = uwu.Substring(0, 3) + invert(uwu.Substring(3, 3)); break; //W Y
+            case 0: uwu = Invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //K B
+            case 1: uwu = Invert(uwu.Substring(0, 3)) + uwu.Substring(3, 3); break; //R M
+            case 2: uwu = uwu.Substring(0, 3) + Invert(uwu.Substring(3, 3)); break; //G C
+            case 3: uwu = uwu.Substring(0, 3) + Invert(uwu.Substring(3, 3)); break; //W Y
         }
-        switch ((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 4) % 8)
+        switch((Array.IndexOf(xorcolor.ToCharArray(), input[count % 6]) ^ 4) % 8)
         {
-            case 4: uwu = leftrotate(uwu, 5); break; //K
-            case 5: uwu = leftrotate(uwu, 5); break; //R
-            case 6: uwu = leftrotate(uwu, 5); break; //G
-            case 7: uwu = leftrotate(uwu, 5); break; //Y
-            case 0: uwu = leftrotate(uwu, 1); break; //B
-            case 1: uwu = leftrotate(uwu, 1); break; //M
-            case 2: uwu = leftrotate(uwu, 1); break; //C
-            case 3: uwu = leftrotate(uwu, 1); break; //Y
+            case 4: uwu = Leftrotate(uwu, 5); break; //K
+            case 5: uwu = Leftrotate(uwu, 5); break; //R
+            case 6: uwu = Leftrotate(uwu, 5); break; //G
+            case 7: uwu = Leftrotate(uwu, 5); break; //Y
+            case 0: uwu = Leftrotate(uwu, 1); break; //B
+            case 1: uwu = Leftrotate(uwu, 1); break; //M
+            case 2: uwu = Leftrotate(uwu, 1); break; //C
+            case 3: uwu = Leftrotate(uwu, 1); break; //Y
         }
         answer = uwu;
-        Debug.LogFormat("[Simon Swindles #{0}]: GUESS #{1} - You guessed {2}. I respond with {3}, and make the next answer {4}", _moduleId, count, input, output, answer);
+        Debug.LogFormat("[Simon Swindles #{0}] GUESS #{1} - You guessed {2}. I respond with {3}, and make the next answer {4}", _moduleId, count, input, output, answer);
         count++;
         input = "";
     }
-    public static string leftrotate(string t, int x)
+    public static string Leftrotate(string t, int x)
     {       //AWKBRA -> WKBRAA
         return t.Substring(x, t.Length - x) + t.Substring(0, x);
     }
@@ -294,7 +294,7 @@ public class Swindlem : MonoBehaviour
     {
         return str.Substring(0, str.Length - 1) + c;
     }
-    private string invert(string str)
+    private string Invert(string str)
     {
         string death = str;
         death = death.Select(x => x.ToString().Replace("K", "-")).Join("");
@@ -313,14 +313,11 @@ public class Swindlem : MonoBehaviour
     }
     private string ReverseString(char[] s)
     {
-
-        for (int i = 0; i < s.Length / 2; i++)
+        for(int i = 0; i < s.Length / 2; i++)
         {
-
             char temp = s[i];
             s[i] = s[s.Length - 1 - i];
             s[s.Length - 1 - i] = temp;
-
         }
         return s.Join("");
     }
@@ -331,55 +328,55 @@ public class Swindlem : MonoBehaviour
     {
         bool Valid = true;
         var m = Regex.Match(command, @"^\s*(query|submit)\s+(?:(.+))$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-        if (m.Success)
+        if(m.Success)
         {
             var type = m.Groups[1].Value;
             var input = m.Groups[2].Value;
             Debug.Log(type);
             Debug.Log(input);
-            if (input.Length != 6)
+            if(input.Length != 6)
             {
                 Valid = false;
             }
             else
             {
-                for (int i = 0; i < 6; i++)
+                for(int i = 0; i < 6; i++)
                 {
-                    if (Array.IndexOf(xorcolor.ToCharArray(), input[i].ToString().ToUpper().ToCharArray()[0]) == -1)
+                    if(Array.IndexOf(xorcolor.ToCharArray(), input[i].ToString().ToUpper().ToCharArray()[0]) == -1)
                         Valid = false;
                 }
             }
-            if (!Valid)
+            if(!Valid)
             {
                 yield return "sendtochaterror Incorrect Syntax. Valid colors are K,R,G,B,C,M,Y, and W. Make sure your input is length 6!";
                 yield break;
             }
             yield return null;  // acknowledge to TP that the command was valid
 
-            for (var i = 0; i < 6; i++)
+            for(var i = 0; i < 6; i++)
             {
                 int X = Array.IndexOf(xorcolor.ToCharArray(), input[i].ToString().ToUpper().ToCharArray()[0]);
-                if (X % 2 == 1) buttons[0].OnInteract();
+                if(X % 2 == 1) buttons[0].OnInteract();
                 yield return new WaitForSeconds(.05f);
-                if (X % 4 == 2 || X % 4 == 3) buttons[1].OnInteract();
+                if(X % 4 == 2 || X % 4 == 3) buttons[1].OnInteract();
                 yield return new WaitForSeconds(.1f);
-                if (X % 8 == 4 || X % 8 == 5 || X % 8 == 6 || X % 8 == 7) buttons[2].OnInteract();
+                if(X % 8 == 4 || X % 8 == 5 || X % 8 == 6 || X % 8 == 7) buttons[2].OnInteract();
                 yield return new WaitForSeconds(.2f);
                 buttons[3].OnInteract();
             }
-            if (type.ToLowerInvariant() == "query")
+            if(type.ToLowerInvariant() == "query")
             {
                 buttons[2].OnInteract();
             }
             else buttons[1].OnInteract();
-            if (solved)
+            if(solved)
             {
                 yield return "solve";
             }
         }
 
         var n = Regex.Match(command, @"^\s*(?:mute|shut\sup)?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-        if (n.Success)
+        if(n.Success)
         {
             yield return null;
             MuteSel.OnInteract();
@@ -391,11 +388,11 @@ public class Swindlem : MonoBehaviour
     // Implemented by Quinn Wuest.
     IEnumerator TwitchHandleForcedSolve()
     {
-        for (int i = 0; i < input.Length; i++)
+        for(int i = 0; i < input.Length; i++)
         {
-            if (input[i] != answer[i])
+            if(input[i] != answer[i])
             {
-                for (int j = input.Length; j < 6; j++)
+                for(int j = input.Length; j < 6; j++)
                 {
                     buttons[3].OnInteract();
                     yield return new WaitForSeconds(0.1f);
@@ -405,10 +402,10 @@ public class Swindlem : MonoBehaviour
             }
         }
         inputSolution:
-        for (int i = input.Length; i < 6; i++)
+        for(int i = input.Length; i < 6; i++)
         {
             var list = GetAutosolveBtns(answer[i], x);
-            for (int j = 0; j < list.Count; j++)
+            for(int j = 0; j < list.Count; j++)
             {
                 list[j].OnInteract();
                 yield return new WaitForSeconds(0.05f);
@@ -422,76 +419,76 @@ public class Swindlem : MonoBehaviour
     private List<KMSelectable> GetAutosolveBtns(char inp, int num)
     {
         var list = new List<KMSelectable>();
-        if (inp == 'K')
+        if(inp == 'K')
         {
-            if (num % 2 != 0)
+            if(num % 2 != 0)
                 list.Add(buttons[0]);
-            if (num % 4 != 0)
+            if(num % 4 != 0)
                 list.Add(buttons[1]);
-            if (num % 8 != 0)
+            if(num % 8 != 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'R')
+        else if(inp == 'R')
         {
-            if (num % 2 == 0)
+            if(num % 2 == 0)
                 list.Add(buttons[0]);
-            if (num % 4 != 0)
+            if(num % 4 != 0)
                 list.Add(buttons[1]);
-            if (num % 8 != 0)
+            if(num % 8 != 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'G')
+        else if(inp == 'G')
         {
-            if (num % 2 != 0)
+            if(num % 2 != 0)
                 list.Add(buttons[0]);
-            if (num % 4 == 0)
+            if(num % 4 == 0)
                 list.Add(buttons[1]);
-            if (num % 8 != 0)
+            if(num % 8 != 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'Y')
+        else if(inp == 'Y')
         {
-            if (num % 2 == 0)
+            if(num % 2 == 0)
                 list.Add(buttons[0]);
-            if (num % 4 == 0)
+            if(num % 4 == 0)
                 list.Add(buttons[1]);
-            if (num % 8 != 0)
+            if(num % 8 != 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'B')
+        else if(inp == 'B')
         {
-            if (num % 2 != 0)
+            if(num % 2 != 0)
                 list.Add(buttons[0]);
-            if (num % 4 != 0)
+            if(num % 4 != 0)
                 list.Add(buttons[1]);
-            if (num % 8 == 0)
+            if(num % 8 == 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'M')
+        else if(inp == 'M')
         {
-            if (num % 2 == 0)
+            if(num % 2 == 0)
                 list.Add(buttons[0]);
-            if (num % 4 != 0)
+            if(num % 4 != 0)
                 list.Add(buttons[1]);
-            if (num % 8 == 0)
+            if(num % 8 == 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'C')
+        else if(inp == 'C')
         {
-            if (num % 2 != 0)
+            if(num % 2 != 0)
                 list.Add(buttons[0]);
-            if (num % 4 == 0)
+            if(num % 4 == 0)
                 list.Add(buttons[1]);
-            if (num % 8 == 0)
+            if(num % 8 == 0)
                 list.Add(buttons[2]);
         }
-        else if (inp == 'W')
+        else if(inp == 'W')
         {
-            if (num % 2 == 0)
+            if(num % 2 == 0)
                 list.Add(buttons[0]);
-            if (num % 4 == 0)
+            if(num % 4 == 0)
                 list.Add(buttons[1]);
-            if (num % 8 == 0)
+            if(num % 8 == 0)
                 list.Add(buttons[2]);
         }
         return list;
