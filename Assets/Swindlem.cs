@@ -181,7 +181,22 @@ public class Swindlem : MonoBehaviour
         },
         s => LeftRotate(s, 1),
         s => LeftRotate(s, 5),
-        s => ReverseString(s.ToCharArray()),
+        s =>
+        {
+            s = s.Replace("K", "-");
+            s = s.Replace("W", "K");
+            s = s.Replace("-", "W");
+            s = s.Replace("G", "-");
+            s = s.Replace("M", "G");
+            s = s.Replace("-", "M");
+            s = s.Replace("R", "-");
+            s = s.Replace("C", "R");
+            s = s.Replace("-", "C");
+            s = s.Replace("Y", "-");
+            s = s.Replace("B", "Y");
+            s = s.Replace("-", "B");
+            return s;
+        },
         s => ReverseTwoHalves(s),
         // Rule-Seeded
         s => new char[] { s[1], s[0], s[3], s[2], s[5], s[4] }.Join(""),
